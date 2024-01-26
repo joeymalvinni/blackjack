@@ -84,6 +84,10 @@ void clear_screen(void) {
 	fwrite("\x1b[H", 1, 3, stdout);
 }
 
+void clear_up(void) {
+	fwrite("\x1b[[1J", 1, 4, stdout);
+}
+
 char* handle_input(char* buffer, size_t buffer_size) {
     if (fgets(buffer, buffer_size, stdin) == NULL) {
         fprintf(stderr, "Error reading input\n");
@@ -110,11 +114,9 @@ void print_at_offset(char* str, int x, int y) {
 		exit(EXIT_FAILURE);
 	}
 
-
+	int initial = y + 1;
 	for (char *p = strtok(copy, "\n"); p != NULL; p = strtok(NULL, "\n")) {
-		printf("\033[%d;%dH", y + 1, x + 1);
-		puts(p);
-		y++;
+		printf("\033[%d;%dH%s", initial++, x + 1, p);
 	}
 
 	free(copy);
@@ -160,7 +162,7 @@ int calculate_hand_value(int hand[], int cards) {
     return value;
 }
 
-void print_cards(int cards[], int player_cards, int dealer[], int dealer_cards, int x, int y) {
+void print_cards(int cards[], int player_cards, int x, int y) {
 	// print player cards
 	print_at_offset("Your hand:", x, y);
 	for (int i = 0; i < player_cards; i++) {
@@ -174,24 +176,24 @@ void print_cards(int cards[], int player_cards, int dealer[], int dealer_cards, 
 	char total_buffer[30];
 	sprintf(total_buffer, "(Hand total: \033[36m%i\033[0m)", calculate_hand_value(cards, player_cards));
 	print_at_offset(total_buffer,  x_padding, 10 + y);
+}
 
+void print_dealer_cards(int dealer[], int dealer_cards, int x, int y) {
 	// print dealer cards
-	print_at_offset("Dealer's hand:", 6 + 13 * player_cards + x,  y);
+	print_at_offset("Dealer's hand:", x,  y);
 	// print
-	print_at_offset(hidden_card, 5 + 13 * player_cards + x, 1 + y);	
+	print_at_offset(hidden_card, x, 1 + y);	
 	for (int i = 1; i < dealer_cards; i++) {
 		int f = dealer[i] % 13; // face
 		int s = dealer[i] / 13; // suit
 
 		char card_buffer[sizeof(score_box) + 2];
 		sprintf(card_buffer, card, faces[f], suits[s], faces[f]);
-		print_at_offset(card_buffer, 5 + (13 * player_cards) + (12 * i) + x, 1 + y);
+		print_at_offset(card_buffer, (12 * i) + x, 1 + y);
 	}
 }
 
-Game play_game(int deck[]) {
-	clear_screen();
-
+Game play_game(int deck[], int player_score, int dealer_score) {
 	// init hands
 	// max number of cards in hand is 11	
 	int cards[11];
@@ -208,12 +210,15 @@ Game play_game(int deck[]) {
 
 	Game game_result;
 
+
 	// player's turn
 	while (1) {
-		print_cards(cards, player_cards, dealer, dealer_cards, x_padding, 2);
-		// y offset should be starting cards offset + 15
-		print_at_offset("Enter \033[34m[1]\033[0m to hit or \033[35m[2]\033[0m to stand.\n>", x_padding, 15);
-		move_to_position(x_padding + 2, 16);
+		print_cards(cards, player_cards, x_padding, 2);
+		print_dealer_cards(dealer, dealer_cards, x_padding, 15);
+
+		// y offset should be last cards offset + 15
+		print_at_offset("Enter \033[34m[1]\033[0m to hit or \033[35m[2]\033[0m to stand.\n>", x_padding, 26);
+		move_to_position(x_padding + 2, 27);
 
 		int choice;
         scanf("%d", &choice);
@@ -301,7 +306,7 @@ int main(void) {
 	
 	while (player_score < 10 && dealer_score < 10) {
 		shuffle(deck, CARDS);
-		Game result = play_game(deck);
+		Game result = play_game(deck, player_score, dealer_score);
 
 		clear_screen();
 		if (result.result == WIN) {
