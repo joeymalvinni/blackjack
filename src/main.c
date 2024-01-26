@@ -133,7 +133,6 @@ void shuffle(int *array, size_t n) {
     }
 }
 
-
 int calculate_hand_value(int hand[], int cards) {
     int value = 0;
     int aces = 0;
@@ -173,6 +172,7 @@ void print_cards(int cards[], int player_cards, int x, int y) {
 		sprintf(card_buffer, card, faces[f], suits[s], faces[f]);
 		print_at_offset(card_buffer, 12 * i + x, 1 + y);
 	}
+
 	char total_buffer[30];
 	sprintf(total_buffer, "(Hand total: \033[36m%i\033[0m)", calculate_hand_value(cards, player_cards));
 	print_at_offset(total_buffer,  x_padding, 10 + y);
@@ -216,10 +216,16 @@ Game play_game(int deck[], int player_score, int dealer_score) {
 		print_cards(cards, player_cards, x_padding, 2);
 		print_dealer_cards(dealer, dealer_cards, x_padding, 15);
 
+		// print score box
+		char box_buffer[sizeof(score_box)+5];
+		sprintf(box_buffer, score_box, player_score, dealer_score);
+		print_at_offset(box_buffer, 70, y_padding + 1);
+
 		// y offset should be last cards offset + 15
 		print_at_offset("Enter \033[34m[1]\033[0m to hit or \033[35m[2]\033[0m to stand.\n>", x_padding, 26);
 		move_to_position(x_padding + 2, 27);
 
+		// TODO
 		int choice;
         scanf("%d", &choice);
 
@@ -234,17 +240,19 @@ Game play_game(int deck[], int player_score, int dealer_score) {
 				game_result.dealer_score = calculate_hand_value(dealer, dealer_cards);
 				return game_result;
             }
+
+			// dealer's turn
+			if (calculate_hand_value(dealer, dealer_cards) < 17) {
+				dealer[dealer_cards++] = deck[rand() % 52];
+			}
         } else if (choice == 2) {
             break;
         } else {
-			// TODO: scanf auto converts to int so this doesn't happen (?) <- to investigate
+			// TODO: scanf auto converts to int so this never happens (?) <- to investigate
+			// WAIT FOR USER INPUT
             printf("Invalid choice. Please enter (1) to hit or (2) to stand.\n");
         }
 
-		// dealer's turn
-		if (calculate_hand_value(dealer, dealer_cards) < 17) {
-			dealer[dealer_cards++] = deck[rand() % 52];
-		}
 
 		clear_screen();
 	}
@@ -347,6 +355,9 @@ int main(void) {
 	}	
 
 	// printf("\e[?25h");
+
+
+	// Final screen
 
     return 0;
 }
