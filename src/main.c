@@ -226,13 +226,9 @@ Game play_game(int deck[], int player_score, int dealer_score) {
 		move_to_position(x_padding + 2, 27);
 
 		// TODO
-		int choice;
-        scanf("%d", &choice);
+		char choice = getchar();
 
-		int c;
-    	while ((c = getchar()) != '\n' && c != EOF);
-
-        if (choice == 1) {
+        if (choice == '1') {
             cards[player_cards++] = deck[rand() % 52];
             if (calculate_hand_value(cards, player_cards) > 21) {
 				game_result.result = LOSS;
@@ -245,9 +241,11 @@ Game play_game(int deck[], int player_score, int dealer_score) {
 			if (calculate_hand_value(dealer, dealer_cards) < 17) {
 				dealer[dealer_cards++] = deck[rand() % 52];
 			}
-        } else if (choice == 2) {
+        } else if (choice == '2') {
             break;
-        } else {
+        } else if (choice == 'q') {
+			exit(EXIT_SUCCESS);
+		} else {
 			// TODO: scanf auto converts to int so this never happens (?) <- to investigate
 			// WAIT FOR USER INPUT
             printf("Invalid choice. Please enter (1) to hit or (2) to stand.\n");
@@ -298,7 +296,9 @@ int main(void) {
 		char c = getchar();
 		if (c == '1') {
 			break;
-		}
+		} else if (c == 'q') {
+            exit(EXIT_SUCCESS);
+        }
 		while (getchar() != '\n');
 	}
 
